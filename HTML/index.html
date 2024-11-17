@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAR STORE</title>
+    <link rel="stylesheet" href="/CSS/index.css">
+    <link rel="icon" href="/IMG/LOGO.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <!-- Botones en la esquina superior izquierda con imágenes -->
+            <div class="left-buttons">
+                <a href="iniciarsesion.html" class="navegacion_enlace icon-button" id="login-link">
+                    <img src="/IMG/IniciarSesion_icon.png" alt="Iniciar Sesión" title="Iniciar Sesión">
+                </a>
+                <a href="cuenta_config.html" class="navegacion_enlace icon-button" id="account-link">
+                    <img src="/IMG/configcuenta.png" alt="Configuración de Cuenta" title="Configuración de Cuenta">
+                </a>
+                <a href="carrito_compras.html" class="navegacion_enlace icon-button" id="cart-link">
+                    <img src="/IMG/Carrito_icon.png" alt="Carrito de Compras" title="Carrito de Compras">
+                </a>
+            </div>
+            <h1>CAR STORE</h1>
+        </header>
+
+        <!-- Barra de navegación -->
+        <nav class="navbar">
+            <input type="text" v-model="searchTerm" placeholder="Buscar por marca o modelo..." @input="filterCars" />
+            <select v-model="sortOrder" @change="sortCars">
+                <option value="asc">Ordenar: Más económico</option>
+                <option value="desc">Ordenar: Más costoso</option>
+            </select>
+        </nav>
+
+        <!-- Sección de botones de autos -->
+        <section class="botones" id="car-list">
+            <div class="fila" v-for="(row, index) in carRows" :key="index">
+                <div class="car-container" v-for="car in row" :key="car.id">
+                    <a :href="`detalle_auto.html?id=${car.id}`" class="boton">
+                        <img :src="car.image_url" :alt="`${car.make} ${car.model}`">
+                    </a>
+                    <div class="car-info">
+                        <p><strong>Marca:</strong> {{ car.make }}</p>
+                        <p><strong>Modelo:</strong> {{ car.model }}</p>
+                        <p><strong>Año:</strong> {{ car.year }}</p>
+                        <p><strong>Precio:</strong> ${{ car.price }}</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Separador de las redes sociales -->
+        <div class="linea-separadora"></div>
+
+        <!-- Redes sociales -->
+        <section class="contacto">
+            <a href="mailto:carstore@example.com" class="contacto_enlace">
+                <i class="fas fa-envelope"></i>
+            </a>
+            <a href="https://www.facebook.com/tuusuario" class="contacto_enlace">
+                <i class="fab fa-facebook"></i>
+            </a>
+            <a href="https://www.instagram.com/tuusuario" class="contacto_enlace">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.twitter.com/tuusuario" class="contacto_enlace">
+                <i class="fab fa-twitter"></i>
+            </a>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const loginLink = document.getElementById("login-link");
+            const accountLink = document.getElementById("account-link");
+            const cartLink = document.getElementById("cart-link");
+            const accountImg = accountLink.querySelector("img");
+            const cartImg = cartLink.querySelector("img");
+            const loginImg = loginLink.querySelector("img"); // Agregamos el acceso a la imagen del login
+
+            const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+
+            if (!isLoggedIn) {
+                // Desactivar botones de cuenta y carrito si no está logueado
+                accountLink.classList.add("disabled");
+                cartLink.classList.add("disabled");
+                // No cambiar la imagen de iniciar sesión
+                accountImg.src = "/IMG/configcuentaRED.png";
+                cartImg.src = "/IMG/Carrito_iconRED.png";
+            } else {
+                loginLink.classList.add("disabled");
+                // No cambiar la imagen de Iniciar Sesión
+                loginImg.src = "/IMG/IniciarSesion_iconRED.png";  // Aquí no lo estamos modificando
+                // Cambiar imágenes de cuenta y carrito de compras
+                accountImg.src = "/IMG/configcuenta.png";
+                cartImg.src = "/IMG/Carrito_icon.png";
+            }
+
+            loginLink.addEventListener("click", (event) => {
+                if (!isLoggedIn) {
+                    window.location.href = "iniciarsesion.html";
+                }
+            });
+
+            accountLink.addEventListener("click", (event) => {
+                if (!isLoggedIn) {
+                    event.preventDefault();
+                    alert("Debe iniciar sesión primero.");
+                    window.location.href = "iniciarsesion.html";
+                }
+            });
+
+            cartLink.addEventListener("click", (event) => {
+                if (!isLoggedIn) {
+                    event.preventDefault();
+                    alert("Debe iniciar sesión primero.");
+                    window.location.href = "iniciarsesion.html";
+                }
+            });
+        });
+
+        new Vue({
+            el: '#app',
+            data: {
+                cars: [],
+                searchTerm: '',
+                sortOrder: 'asc',
+                filteredCars: []
+            },
+            computed: {
+                carRows() {
+                    const rows = [];
+                    for (let i = 0; i < this.filteredCars.length; i += 4) {
+                        rows.push(this.filteredCars.slice(i, i + 4));
+                    }
+                    return rows;
+                }
+            },
+            methods: {
+                async fetchCars() {
+                    try {
+                        const response = await fetch("http://localhost:5000/cars");
+                        const cars = await response.json();
+                        this.cars = cars;
+                        this.filteredCars = cars;
+                    } catch (error) {
+                        console.error("Error fetching cars:", error);
+                    }
+                },
+                filterCars() {
+                    const term = this.searchTerm.toLowerCase();
+                    this.filteredCars = this.cars.filter(car =>
+                        car.make.toLowerCase().includes(term) || car.model.toLowerCase().includes(term)
+                    );
+                    this.sortCars();
+                },
+                sortCars() {
+                    this.filteredCars.sort((a, b) => {
+                        return this.sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
+                    });
+                }
+            },
+            created() {
+                this.fetchCars();
+            }
+        });
+    </script>
+</body>
+</html>

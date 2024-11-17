@@ -1,0 +1,138 @@
+/* Estilos generales para la página */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-image: url('/IMG/BANNER_contacto.jpg'); /* Imagen de fondo */
+    background-size: cover; /* Asegura que la imagen cubra toda la pantalla */
+    background-position: center;
+    background-attachment: fixed; /* Fija la imagen de fondo */
+    color: #fff; /* Texto blanco por defecto */
+    box-sizing: border-box; /* Asegura que el padding no se salga de los límites */
+}
+
+h2 {
+    color: #fc00b0;
+    margin-bottom: 20px;
+}
+
+/* Estilo para el contenedor del formulario */
+#app {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    text-align: center;
+    z-index: 1; /* Asegura que el contenido del formulario esté sobre la imagen */
+}
+
+/* Estilos para los formularios */
+form {
+    background-color: rgba(255, 255, 255, 0.9); /* Fondo semi-transparente */
+    padding: 20px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: black; /* Texto dentro del formulario será negro */
+    box-sizing: border-box; /* Asegura que el padding no se salga de los límites */
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+    text-align: left;
+    font-size: 16px;
+}
+
+/* Ajuste para que los inputs se ubiquen correctamente */
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    margin-bottom: 20px;
+    box-sizing: border-box; /* Asegura que el padding esté dentro del tamaño total */
+}
+
+button {
+    background-color: #e60086; /* Color del botón */
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    box-sizing: border-box; /* Asegura que el padding esté dentro del tamaño total */
+}
+
+button:hover {
+    background-color: #fc00b0; /* Color cuando el botón es hover */
+}
+
+/* Estilo para los mensajes de error y éxito */
+p {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.error-message {
+    color: red;
+}
+
+.success-message {
+    color: green;
+}
+
+/* Estilos para los enlaces */
+a {
+    color: #e60086;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Estilo para el botón de vuelta */
+.back-button {
+    position: absolute;
+    top: 10px;
+    left: -120px;
+    display: inline-block;
+    transition: transform 0.3s ease;
+    width: 500px; /* Ajusta el tamaño del contenedor del ícono */
+    height: 50px; /* Ajusta el tamaño del contenedor del ícono */
+}
+
+.back-button img {
+    width: 100%; /* La imagen ocupa todo el contenedor */
+    height: 100%; /* La imagen ocupa todo el contenedor */
+    object-fit: contain; /* Asegura que la imagen no se distorsione */
+}
+
+.back-button:hover {
+    transform: scale(1.1); /* Efecto de agrandamiento */
+}
+
+/* Estilos para los campos con error */
+.input-error {
+    border: 2px solid red; /* Bordes rojos */
+    animation: shake 0.5s ease-in-out; /* Animación de temblor */
+}
+
+/* Animación de temblor */
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}

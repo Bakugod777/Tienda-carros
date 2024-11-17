@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles del Auto</title>
+    <link rel="stylesheet" href="/CSS/detalle_auto.css">
+    <link rel="icon" href="/IMG/LOGO.png" type="image/x-icon">
+</head>
+
+<body>
+    <!-- Botón de regreso a index -->
+    <a href="index.html" class="back-button">
+        <img src="/IMG/carstore_icon.png" alt="Volver al inicio" title="Volver al inicio">
+    </a>
+
+    <div id="app">
+        <div class="car-details">
+            <div class="car-image-container">
+                <img :src="car.image_url" alt="Auto Image" class="car-image">
+            </div>
+
+            <div class="car-info">
+                <h2>{{ car.make }} {{ car.model }} ({{ car.year }})</h2>
+                <p><strong>Descripción:</strong> {{ car.description }}</p>
+                <div class="price-container">
+                    <p class="price">${{ car.price }}</p>
+                </div>
+                <!-- Botón para agregar al carrito -->
+                <button 
+                    @click="addToCart" 
+                    :disabled="!userId" 
+                    class="add-to-cart-button">
+                    <img 
+                        :src="userId ? '/IMG/AñadirCarrito_icon.png' : '/IMG/AñadirCarrito_iconRED.png'" 
+                        :alt="userId ? 'Añadir al carrito' : 'Inicia sesión para añadir al carrito'" 
+                        class="add-to-cart-icon"
+                    >
+                </button>
+            </div>
+        </div>
+
+        <!-- Separador de las reviews -->
+        <div class="linea-separadora"></div>
+
+        <!-- Reviews -->
+        <section class="reviews">
+            <h3>Reseñas</h3>
+            <div v-if="reviews && reviews.length > 0">
+                <div v-for="review in reviews" :key="review.id" class="review">
+                    <p><strong>Calificación:</strong> {{ review.rating }}</p>
+                    <p><strong>Comentario:</strong> {{ review.comment }}</p>
+                </div>
+            </div>
+            <div v-else>
+                <p>No hay reseñas para este auto.</p>
+            </div>
+
+            <!-- Formulario para agregar una nueva reseña -->
+            <div v-if="userId">
+                <h3>Publica tu reseña</h3>
+                <form @submit.prevent="submitReview">
+                    <label for="rating">Calificación (1-5):</label>
+                    <input type="number" v-model="newReview.rating" id="rating" min="1" max="5" required>
+                    <label for="comment">Comentario:</label>
+                    <textarea v-model="newReview.comment" id="comment" required></textarea>
+                    <button type="submit">Publicar reseña</button>
+                </form>
+            </div>
+            <div v-else>
+                <p>Inicia sesión para poder publicar una reseña.</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                car: null,
+                reviews: [],
+                userId: localStorage.getItem('userId'),  // Obtener el ID del usuario desde el localStorage
+                newReview: {
+                    rating: 1,
+                    comment: ''
+                }
+            },
+            methods: {
+                async fetchCarDetails() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const carId = urlParams.get('id');
+                    
+                    try {
+                        const response = await fetch(`http://localhost:5000/cars/${carId}`);
+                        this.car = await response.json();
+                    } catch (error) {
+                        console.error("Error fetching car details:", error);
+                    }
+                },
+                async fetchReviews() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const carId = urlParams.get('id');
+
+                    try {
+                        const response = await fetch(`http://localhost:5000/reviews/car/${carId}`);
+                        this.reviews = await response.json();
+                    } catch (error) {
+                        console.error("Error fetching reviews:", error);
+                    }
+                },
+                async addToCart() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const carId = urlParams.get('id');
+
+                    try {
+                        const response = await fetch("http://localhost:5000/orders", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                user_id: this.userId,
+                                car_id: carId,
+                                status: "en carrito"
+                            })
+                        });
+
+                        if (response.ok) {
+                            alert("Auto añadido al carrito con éxito.");
+                            window.location.href = "carrito_compras.html";
+                        } else {
+                            alert("Ocurrió un error al añadir el auto al carrito.");
+                        }
+                    } catch (error) {
+                        console.error("Error al añadir al carrito:", error);
+                        alert("Error al procesar la solicitud.");
+                    }
+                },
+                async submitReview() {
+                    if (!this.newReview.comment) {
+                        alert("Por favor, escribe un comentario.");
+                        return;
+                    }
+
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const carId = urlParams.get('id');
+                    
+                    try {
+                        const response = await fetch("http://localhost:5000/reviews", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                user_id: this.userId,
+                                car_id: carId,
+                                rating: this.newReview.rating,
+                                comment: this.newReview.comment
+                            })
+                        });
+
+                        if (response.ok) {
+                            alert("Reseña publicada con éxito.");
+                            this.fetchReviews();  // Actualizar las reseñas
+                            this.newReview.comment = '';  // Limpiar el formulario
+                            this.newReview.rating = 1;
+                        } else {
+                            alert("Ocurrió un error al publicar la reseña.");
+                        }
+                    } catch (error) {
+                        console.error("Error al publicar reseña:", error);
+                        alert("Error al procesar la solicitud.");
+                    }
+                }
+            },
+            created() {
+                this.fetchCarDetails();
+                this.fetchReviews();
+            }
+        });
+    </script>
+</body>
+</html>

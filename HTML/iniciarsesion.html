@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link rel="stylesheet" href="/CSS/iniciarsesion.css">
+</head>
+<body>
+<div id="app">
+    <!-- Botón en la esquina superior izquierda -->
+    <a href="index.html" class="back-button">
+        <img src="/IMG/carstore_icon.png" alt="Volver a la tienda" title="Volver a la tienda">
+    </a>
+
+    <!-- Formulario de Inicio de Sesión -->
+    <h2>Iniciar Sesión</h2>
+    <form @submit.prevent="login">
+        <label for="email">Email:</label>
+        <input type="email" v-model="loginEmail" :class="{'input-error': loginError}" required>
+
+        <label for="password">Password:</label>
+        <input type="password" v-model="loginPassword" :class="{'input-error': loginError}" required>
+
+        <button type="submit">Iniciar Sesión</button>
+    </form>
+    <p v-if="loginError" style="color: red;" class="error-message">{{ loginError }}</p>
+
+    <!-- Formulario de Registro de Usuario -->
+    <h2>Registro de Usuario</h2>
+    <form @submit.prevent="register">
+        <label for="username">Username:</label>
+        <input type="text" v-model="registerUsername" required>
+
+        <label for="email">Email:</label>
+        <input type="email" v-model="registerEmail" required>
+
+        <label for="password">Password:</label>
+        <input type="password" v-model="registerPassword" required>
+
+        <button type="submit">Registrarse</button>
+    </form>
+    <p v-if="registerError" style="color: red;" class="error-message">{{ registerError }}</p>
+    <p v-if="registerSuccess" style="color: green;" class="success-message">{{ registerSuccess }}</p>
+</div>
+
+<script>
+new Vue({
+    el: '#app',
+    data: {
+        loginEmail: '',
+        loginPassword: '',
+        loginError: '',
+        registerUsername: '',
+        registerEmail: '',
+        registerPassword: '',
+        registerError: '',
+        registerSuccess: ''
+    },
+    methods: {
+        login() {
+            fetch("http://localhost:5000/users", {
+                method: "GET"
+            })
+            .then(response => response.json())
+            .then(users => {
+                const user = users.find(u => u.email === this.loginEmail && u.password === this.loginPassword);
+                if (user) {
+                    localStorage.setItem("isLoggedIn", "true"); // Guardar en localStorage
+                    localStorage.setItem("userId", user.id); // Almacenar el userId
+                    window.location.href = "index.html"; // Redirige al index si el login es exitoso
+                } else {
+                    this.loginError = "Credenciales inválidas";
+                }
+            })
+            .catch(error => {
+                console.error("Error al iniciar sesión:", error);
+                this.loginError = "Error al iniciar sesión. Intente de nuevo.";
+            });
+        },
+        register() {
+            fetch("http://localhost:5000/users", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    username: this.registerUsername,
+                    email: this.registerEmail,
+                    password: this.registerPassword
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    this.registerSuccess = "Usuario registrado exitosamente";
+                    this.registerError = "";
+                    this.registerUsername = "";
+                    this.registerEmail = "";
+                    this.registerPassword = "";
+                } else {
+                    response.json().then(data => {
+                        this.registerError = data.message || "Error al registrarse";
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error al registrarse:", error);
+                this.registerError = "Error al registrarse. Intente de nuevo.";
+            });
+        }
+    }
+});
+</script>
+
+</body>
+</html>

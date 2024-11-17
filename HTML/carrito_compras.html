@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de Compras</title>
+    <link rel="stylesheet" href="/CSS/carrito_compras.css">
+    <link rel="icon" href="/IMG/LOGO.png" type="image/x-icon">
+</head>
+<body>
+    <!-- Botón de regreso -->
+    <a href="index.html" class="back-button">
+        <img src="/IMG/carstore_icon.png" alt="Volver al inicio" title="Volver al inicio">
+    </a>
+
+    <div id="app">
+        <h1>Carrito de Compras</h1>
+
+        <!-- Si el carrito está vacío -->
+        <div v-if="cartItems.length === 0" class="empty-cart">
+            <p>No hay autos en el carrito.</p>
+            <a href="index.html" class="back-home">Regresar a Inicio</a>
+        </div>
+
+        <!-- Lista de autos en el carrito -->
+        <div v-else class="cart-container">
+            <div v-for="item in cartItems" :key="item.order_id" class="cart-item">
+                <div class="item-image">
+                    <img :src="item.image_url" alt="Imagen del Auto" class="car-image">
+                </div>
+                <div class="item-info">
+                    <h2>{{ item.make }} {{ item.model }} ({{ item.year }})</h2>
+                    <p><strong>Precio:</strong> ${{ item.price }}</p>
+                    <button @click="removeFromCart(item.order_id)" class="remove-button">Eliminar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón Comprar -->
+        <button v-if="cartItems.length > 0" @click="openModal" class="buy-button">Comprar</button>
+
+        <!-- Modal -->
+        <div v-if="isModalVisible" class="modal">
+            <div class="modal-content">
+                <h2>Realizar Pago</h2>
+                <label for="card-number">Número de Tarjeta:</label>
+                <input id="card-number" type="text" placeholder="1234 5678 9012 3456">
+                <div>
+                    <button @click="pay" class="pay-button">Pagar</button>
+                    <button @click="closeModal" class="close-button">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                cartItems: [],
+                isModalVisible: false // Controla la visibilidad del modal
+            },
+            methods: {
+                fetchCart() {
+                    const userId = localStorage.getItem('userId');
+                    if (!userId) {
+                        alert("Debe iniciar sesión para ver su carrito.");
+                        window.location.href = "iniciarsesion.html";
+                        return;
+                    }
+
+                    fetch(`http://localhost:5000/orders?user_id=${userId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            this.cartItems = data;
+                        })
+                        .catch(error => console.error("Error al obtener el carrito:", error));
+                },
+                removeFromCart(orderId) {
+                    fetch(`http://localhost:5000/orders/${orderId}`, {
+                        method: 'DELETE',
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                this.cartItems = this.cartItems.filter(item => item.order_id !== orderId);
+                                alert("Auto eliminado del carrito.");
+                            } else {
+                                alert("No se pudo eliminar el auto.");
+                            }
+                        })
+                        .catch(error => console.error("Error al eliminar del carrito:", error));
+                },
+                openModal() {
+                    this.isModalVisible = true; // Muestra el modal
+                },
+                closeModal() {
+                    this.isModalVisible = false; // Oculta el modal
+                },
+                pay() {
+                    const userId = localStorage.getItem('userId');
+                    if (!userId) {
+                        alert("Debe iniciar sesión para completar el pago.");
+                        return;
+                    }
+
+                    // Realizar el pago
+                    fetch(`http://localhost:5000/orders/user/${userId}`, {
+                        method: 'DELETE'
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.message) {
+                                alert("Pago realizado con éxito. El carrito se ha vaciado.");
+                                this.cartItems = []; // Vaciar el carrito localmente
+                            } else {
+                                alert("Hubo un problema al vaciar el carrito.");
+                            }
+                        })
+                        .catch(error => console.error("Error al vaciar el carrito:", error))
+                        .finally(() => {
+                            this.closeModal();
+                        });
+                }
+            },
+            created() {
+                this.fetchCart();
+            }
+        });
+    </script>
+</body>
+</html>
