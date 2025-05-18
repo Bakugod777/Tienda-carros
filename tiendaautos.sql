@@ -170,6 +170,15 @@ ALTER TABLE `reviews`
 ALTER TABLE `users`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
+
+ALTER TABLE users
+  ADD COLUMN is_admin TINYINT(1) NOT NULL DEFAULT 0;
+
+
+UPDATE users
+  SET is_admin = 1
+  WHERE username = 'johndoe';  -- o el usuario que quieras
+
 --
 -- Restricciones para tablas volcadas
 --

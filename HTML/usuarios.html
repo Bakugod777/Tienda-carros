@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link rel="stylesheet" href="/CSS/admin.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #1a237e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            background-color: white;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #3949ab;
+            color: white;
+        }
+        button {
+            padding: 6px 12px;
+            background-color: #e53935;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #c62828;
+        }
+        .back-button {
+            margin-top: 20px;
+            display: inline-block;
+            background-color: #1a237e;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Gestión de Usuarios</h1>
+
+        <table v-if="users.length > 0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="user in users" :key="user.id">
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td><button @click="deleteUser(user.id)">Eliminar</button></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p v-else>Cargando usuarios o no hay usuarios registrados...</p>
+
+        <a href="admin.html" class="back-button">← Volver al panel</a>
+    </div>
+
+    <script>
+    new Vue({
+        el: '#app',
+        data: {
+            users: []
+        },
+        methods: {
+            fetchUsers() {
+                fetch("http://localhost:5000/users")
+                    .then(response => response.json())
+                    .then(data => {
+                        this.users = data;
+                    })
+                    .catch(error => {
+                        console.error("Error al obtener usuarios:", error);
+                    });
+            },
+            deleteUser(id) {
+                if (confirm("¿Estás seguro de eliminar este usuario?")) {
+                    fetch(`http://localhost:5000/users/${id}`, {
+                        method: "DELETE"
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            this.users = this.users.filter(user => user.id !== id);
+                        } else {
+                            alert("Error al eliminar el usuario.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error al eliminar:", error);
+                    });
+                }
+            }
+        },
+        mounted() {
+            this.fetchUsers();
+        }
+    });
+    </script>
+</body>
+</html>

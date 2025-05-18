@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pedidos</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link rel="stylesheet" href="/CSS/admin.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #1a237e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            background-color: white;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #3949ab;
+            color: white;
+        }
+        button {
+            padding: 6px 12px;
+            background-color: #e53935;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #c62828;
+        }
+        .back-button {
+            margin-top: 20px;
+            display: inline-block;
+            background-color: #1a237e;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Gestión de Pedidos</h1>
+
+        <table v-if="orders.length > 0">
+            <thead>
+                <tr>
+                    <th>ID Pedido</th>
+                    <th>Usuario</th>
+                    <th>Auto</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="order in orders" :key="order.order_id">
+                    <td>{{ order.order_id }}</td>
+                    <td>{{ order.username }}</td>
+                    <td>{{ order.make }} {{ order.model }}</td>
+                    <td>{{ order.status }}</td>
+                    <td><button @click="deleteOrder(order.order_id)">Eliminar</button></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p v-else>No hay pedidos registrados o no se pudieron cargar.</p>
+
+        <a href="admin.html" class="back-button">← Volver al panel</a>
+    </div>
+
+    <script>
+    new Vue({
+        el: '#app',
+        data: {
+            orders: []
+        },
+        methods: {
+            fetchOrders() {
+                fetch("http://localhost:5000/orders/all")
+                    .then(response => response.json())
+                    .then(data => {
+                        this.orders = data;
+                    })
+                    .catch(error => {
+                        console.error("Error al obtener pedidos:", error);
+                    });
+            },
+            deleteOrder(id) {
+                if (confirm("¿Estás seguro de eliminar este pedido?")) {
+                    fetch(`http://localhost:5000/orders/${id}`, {
+                        method: "DELETE"
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            this.orders = this.orders.filter(o => o.order_id !== id);
+                        } else {
+                            alert("Error al eliminar el pedido.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error al eliminar pedido:", error);
+                    });
+                }
+            }
+        },
+        mounted() {
+            this.fetchOrders();
+        }
+    });
+    </script>
+</body>
+</html>

@@ -22,6 +22,9 @@
                 <a href="carrito_compras.html" class="navegacion_enlace icon-button" id="cart-link">
                     <img src="/IMG/Carrito_icon.png" alt="Carrito de Compras" title="Carrito de Compras">
                 </a>
+                <a href="admin.html" class="navegacion_enlace icon-button" id="admin-link">
+                    <img src="/IMG/admin_icon.png" alt="Administración" title="Administración">
+                </a>
             </div>
             <h1>CAR STORE</h1>
         </header>
@@ -78,26 +81,26 @@
             const loginLink = document.getElementById("login-link");
             const accountLink = document.getElementById("account-link");
             const cartLink = document.getElementById("cart-link");
+            const adminLink = document.getElementById("admin-link");
             const accountImg = accountLink.querySelector("img");
             const cartImg = cartLink.querySelector("img");
-            const loginImg = loginLink.querySelector("img"); // Agregamos el acceso a la imagen del login
+            const loginImg = loginLink.querySelector("img");
 
             const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
             if (!isLoggedIn) {
-                // Desactivar botones de cuenta y carrito si no está logueado
                 accountLink.classList.add("disabled");
                 cartLink.classList.add("disabled");
-                // No cambiar la imagen de iniciar sesión
+                adminLink.classList.add("disabled");
                 accountImg.src = "/IMG/configcuentaRED.png";
                 cartImg.src = "/IMG/Carrito_iconRED.png";
+                adminLink.querySelector("img").src = "/IMG/admin_iconRED.png";
             } else {
                 loginLink.classList.add("disabled");
-                // No cambiar la imagen de Iniciar Sesión
-                loginImg.src = "/IMG/IniciarSesion_iconRED.png";  // Aquí no lo estamos modificando
-                // Cambiar imágenes de cuenta y carrito de compras
+                loginImg.src = "/IMG/IniciarSesion_iconRED.png";
                 accountImg.src = "/IMG/configcuenta.png";
                 cartImg.src = "/IMG/Carrito_icon.png";
+                adminLink.querySelector("img").src = "/IMG/admin_icon.png";
             }
 
             loginLink.addEventListener("click", (event) => {
@@ -115,6 +118,14 @@
             });
 
             cartLink.addEventListener("click", (event) => {
+                if (!isLoggedIn) {
+                    event.preventDefault();
+                    alert("Debe iniciar sesión primero.");
+                    window.location.href = "iniciarsesion.html";
+                }
+            });
+
+            adminLink.addEventListener("click", (event) => {
                 if (!isLoggedIn) {
                     event.preventDefault();
                     alert("Debe iniciar sesión primero.");

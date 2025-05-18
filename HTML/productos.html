@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestión de Productos</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <link rel="stylesheet" href="/CSS/admin.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #1a237e;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      background-color: white;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background-color: #3949ab;
+      color: white;
+    }
+    button {
+      padding: 6px 12px;
+      margin: 2px;
+      background-color: #3949ab;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button.delete-btn {
+      background-color: #e53935;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    input {
+      width: 100%;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+    .back-button {
+      margin-top: 20px;
+      display: inline-block;
+      background-color: #1a237e;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <h1>Gestión de Productos</h1>
+
+  <!-- Agregar producto nuevo -->
+  <h2>Agregar Nuevo Auto</h2>
+  <table>
+    <tr>
+      <td><input v-model="newCar.make" placeholder="Marca" /></td>
+      <td><input v-model="newCar.model" placeholder="Modelo" /></td>
+      <td><input v-model.number="newCar.year" placeholder="Año" /></td>
+      <td><input v-model.number="newCar.price" placeholder="Precio" /></td>
+      <td><input v-model="newCar.description" placeholder="Descripción" /></td>
+      <td><input v-model="newCar.image_url" placeholder="URL Imagen" /></td>
+      <td><button @click="addCar">Agregar</button></td>
+    </tr>
+  </table>
+
+  <!-- Tabla de productos -->
+  <table v-if="cars.length > 0">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Marca</th>
+        <th>Modelo</th>
+        <th>Año</th>
+        <th>Precio</th>
+        <th>Descripción</th>
+        <th>Imagen</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="car in cars" :key="car.id">
+        <td>{{ car.id }}</td>
+        <td><input v-model="car.make" /></td>
+        <td><input v-model="car.model" /></td>
+        <td><input v-model.number="car.year" /></td>
+        <td><input v-model.number="car.price" /></td>
+        <td><input v-model="car.description" /></td>
+        <td><input v-model="car.image_url" /></td>
+        <td>
+          <button @click="updateCar(car)">Modificar</button>
+          <button class="delete-btn" @click="deleteCar(car.id)">Eliminar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p v-else>No hay autos registrados.</p>
+
+  <a href="admin.html" class="back-button">← Volver al panel</a>
+</div>
+
+<script>
+new Vue({
+  el: '#app',
+  data: {
+    cars: [],
+    newCar: {
+      make: '',
+      model: '',
+      year: '',
+      price: '',
+      description: '',
+      image_url: ''
+    }
+  },
+  methods: {
+    fetchCars() {
+      fetch("http://localhost:5000/cars")
+        .then(res => res.json())
+        .then(data => {
+          this.cars = data;
+        })
+        .catch(err => console.error("Error al obtener autos:", err));
+    },
+    addCar() {
+      fetch("http://localhost:5000/cars", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(this.newCar)
+      })
+      .then(res => {
+        if (res.ok) {
+          this.fetchCars();
+          this.newCar = { make: '', model: '', year: '', price: '', description: '', image_url: '' };
+        } else {
+          alert("Error al agregar auto.");
+        }
+      });
+    },
+    updateCar(car) {
+      fetch(`http://localhost:5000/cars/${car.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          make: car.make,
+          model: car.model,
+          year: car.year,
+          price: car.price,
+          description: car.description,
+          image_url: car.image_url
+        })
+      })
+      .then(res => {
+        if (res.ok) {
+          alert("Auto actualizado correctamente.");
+        } else {
+          alert("Error al actualizar auto.");
+        }
+      });
+    },
+    deleteCar(id) {
+      if (confirm("¿Seguro que quieres eliminar este auto?")) {
+        fetch(`http://localhost:5000/cars/${id}`, {
+          method: "DELETE"
+        })
+        .then(res => {
+          if (res.ok) {
+            this.cars = this.cars.filter(c => c.id !== id);
+          } else {
+            alert("Error al eliminar auto.");
+          }
+        });
+      }
+    }
+  },
+  mounted() {
+    this.fetchCars();
+  }
+});
+</script>
+</body>
+</html>

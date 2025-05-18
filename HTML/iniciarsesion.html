@@ -27,22 +27,8 @@
     </form>
     <p v-if="loginError" style="color: red;" class="error-message">{{ loginError }}</p>
 
-    <!-- Formulario de Registro de Usuario -->
-    <h2>Registro de Usuario</h2>
-    <form @submit.prevent="register">
-        <label for="username">Username:</label>
-        <input type="text" v-model="registerUsername" required>
-
-        <label for="email">Email:</label>
-        <input type="email" v-model="registerEmail" required>
-
-        <label for="password">Password:</label>
-        <input type="password" v-model="registerPassword" required>
-
-        <button type="submit">Registrarse</button>
-    </form>
-    <p v-if="registerError" style="color: red;" class="error-message">{{ registerError }}</p>
-    <p v-if="registerSuccess" style="color: green;" class="success-message">{{ registerSuccess }}</p>
+    <!-- Botón para ir a Registro -->
+    <p>¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a></p>
 </div>
 
 <script>
@@ -51,67 +37,32 @@ new Vue({
     data: {
         loginEmail: '',
         loginPassword: '',
-        loginError: '',
-        registerUsername: '',
-        registerEmail: '',
-        registerPassword: '',
-        registerError: '',
-        registerSuccess: ''
+        loginError: ''
     },
     methods: {
         login() {
-            fetch("http://localhost:5000/users", {
-                method: "GET"
-            })
-            .then(response => response.json())
-            .then(users => {
-                const user = users.find(u => u.email === this.loginEmail && u.password === this.loginPassword);
-                if (user) {
-                    localStorage.setItem("isLoggedIn", "true"); // Guardar en localStorage
-                    localStorage.setItem("userId", user.id); // Almacenar el userId
-                    window.location.href = "index.html"; // Redirige al index si el login es exitoso
-                } else {
-                    this.loginError = "Credenciales inválidas";
-                }
-            })
-            .catch(error => {
-                console.error("Error al iniciar sesión:", error);
-                this.loginError = "Error al iniciar sesión. Intente de nuevo.";
-            });
-        },
-        register() {
-            fetch("http://localhost:5000/users", {
+                fetch("http://localhost:5000/login", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username: this.registerUsername,
-                    email: this.registerEmail,
-                    password: this.registerPassword
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: this.loginEmail, password: this.loginPassword })
                 })
-            })
-            .then(response => {
-                if (response.ok) {
-                    this.registerSuccess = "Usuario registrado exitosamente";
-                    this.registerError = "";
-                    this.registerUsername = "";
-                    this.registerEmail = "";
-                    this.registerPassword = "";
-                } else {
-                    response.json().then(data => {
-                        this.registerError = data.message || "Error al registrarse";
-                    });
-                }
-            })
-            .catch(error => {
-                console.error("Error al registrarse:", error);
-                this.registerError = "Error al registrarse. Intente de nuevo.";
-            });
+                .then(res => {
+                if (!res.ok) throw new Error()
+                return res.json()
+                })
+                .then(user => {
+                localStorage.setItem("isLoggedIn", "true");
+                localStorage.setItem("userId", user.id);
+                localStorage.setItem("isAdmin", user.is_admin ? "true" : "false");
+                window.location.href = user.is_admin ? "admin.html" : "index.html";
+                })
+                .catch(() => {
+                this.loginError = "Credenciales inválidas";
+                });
+
         }
     }
 });
 </script>
-
 </body>
 </html>

@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify  # type: ignore
 from flask_cors import CORS
+from functools import wraps
 import mysql.connector  # type: ignore
 
 app = Flask(__name__)
@@ -14,6 +15,16 @@ db = mysql.connector.connect(
 )
 
 cursor = db.cursor(dictionary=True)
+
+@app.route('/users/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+    user = cursor.fetchone()
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    cursor.execute("DELETE FROM users WHERE id = %s", (id,))
+    db.commit()
+    return jsonify({"message": f"User with ID {id} deleted"}), 200
 
 @app.route('/users', methods=['POST'])
 def add_user():
@@ -82,6 +93,32 @@ def add_car():
     db.commit()
     return jsonify({"message": "Car added successfully!"}), 201
 
+@app.route('/cars/<int:id>', methods=['PUT'])
+def update_car(id):
+    data = request.json
+    cursor.execute("SELECT * FROM cars WHERE id = %s", (id,))
+    car = cursor.fetchone()
+    if not car:
+        return jsonify({"message": "Car not found"}), 404
+
+    query = """
+        UPDATE cars
+        SET make = %s, model = %s, year = %s, price = %s, description = %s, image_url = %s
+        WHERE id = %s
+    """
+    cursor.execute(query, (
+        data['make'],
+        data['model'],
+        data['year'],
+        data['price'],
+        data['description'],
+        data['image_url'],
+        id
+    ))
+    db.commit()
+    return jsonify({"message": "Car updated successfully!"}), 200
+
+
 @app.route('/cars', methods=['GET'])
 def get_cars():
     cursor.execute("SELECT * FROM cars")
@@ -127,6 +164,24 @@ def get_orders():
     orders = cursor.fetchall()
     return jsonify(orders), 200
 
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    query = "SELECT id, username, email, is_admin FROM users WHERE email=%s AND password=%s"
+    cursor.execute(query, (data['email'], data['password']))
+    user = cursor.fetchone()
+    if not user:
+        return jsonify({"message": "Credenciales inválidas"}), 401
+
+    # Devuelve también is_admin
+    return jsonify({
+        "id": user['id'],
+        "username": user['username'],
+        "email": user['email'],
+        "is_admin": bool(user['is_admin'])
+    }), 200
+
+
 
 @app.route('/orders/<int:id>', methods=['GET'])
 def get_order(id):
@@ -135,6 +190,28 @@ def get_order(id):
     if order:
         return jsonify(order), 200
     return jsonify({"message": "Order not found"}), 404
+
+def admin_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        user_id = request.headers.get("X-User-Id")
+        cursor.execute("SELECT is_admin FROM users WHERE id=%s", (user_id,))
+        u = cursor.fetchone()
+        if not u or not u['is_admin']:
+            return jsonify({"message": "Forbidden"}), 403
+        return f(*args, **kwargs)
+    return wrapped
+
+@app.route('/orders/all', methods=['GET'])
+def get_all_orders():
+    cursor.execute("""
+        SELECT orders.id AS order_id, users.username, cars.make, cars.model, orders.status
+        FROM orders
+        JOIN users ON orders.user_id = users.id
+        JOIN cars ON orders.car_id = cars.id
+    """)
+    orders = cursor.fetchall()
+    return jsonify(orders), 200
 
 @app.route('/reviews', methods=['POST'])
 def add_review():
@@ -188,6 +265,10 @@ def delete_orders_by_user(user_id):
     db.commit()
 
     return jsonify({"message": f"All orders for user ID {user_id} have been successfully deleted!"}), 200
+
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
